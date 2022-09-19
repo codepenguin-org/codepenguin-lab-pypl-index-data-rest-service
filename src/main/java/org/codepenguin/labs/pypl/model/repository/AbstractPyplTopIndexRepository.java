@@ -11,11 +11,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-public abstract class AbstractPyplTopIndexRepository<T> implements PyplTopIndexRepository<T> {
+abstract class AbstractPyplTopIndexRepository<T> implements PyplTopIndexRepository<T> {
 
     private final String url;
 
-    public AbstractPyplTopIndexRepository(final String url) {
+    AbstractPyplTopIndexRepository(final String url) {
         this.url = url;
     }
 
@@ -53,15 +53,49 @@ public abstract class AbstractPyplTopIndexRepository<T> implements PyplTopIndexR
         return indices;
     }
 
-    protected abstract Optional<Node> getScriptNode(final Document document);
+    protected Optional<Node> getScriptNode(final Document document) {
+        return Optional.ofNullable(document.childNode(2).childNode(1).childNode(41).firstChild());
+    }
 
-    protected abstract int getStartIndex(final List<String> lines);
+    protected int getStartIndex(final List<String> lines) {
+        return lines.indexOf("table = \"<!-- begin section All-->\\");
+    }
 
-    protected abstract int getEndIndex(final List<String> lines);
+    protected int getEndIndex(final List<String> lines) {
+        return lines.indexOf("<!-- end section All-->\\");
+    }
 
-    protected abstract List<Node> getFragmentChildNodes(final Document fragment);
+    protected List<Node> getFragmentChildNodes(final Document fragment) {
+        return fragment.childNode(0).childNode(1).childNodes();
+    }
 
-    protected abstract boolean removeFromValues(final String value);
+    protected boolean removeFromValues(final String value) {
+        return value.startsWith("<img src=\"");
+    }
 
     protected abstract T buildIndex(final List<String> values);
+
+    protected String getDescription(final List<String> values) {
+        return values.get(1);
+    }
+
+    protected double getTrend(final List<String> values) {
+        return getParsePercentDouble(values.get(3));
+    }
+
+    protected double getParsePercentDouble(final String value) {
+        return Double.parseDouble(replacePercent(value).trim());
+    }
+
+    protected double getShare(final List<String> values) {
+        return getParsePercentDouble(values.get(2));
+    }
+
+    protected int getRank(final List<String> values) {
+        return Integer.parseInt(values.get(0));
+    }
+
+    protected String replacePercent(final String value) {
+        return value.replace('%', ' ');
+    }
 }
